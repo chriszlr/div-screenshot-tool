@@ -42,7 +42,7 @@ function startPicker() {
   document.addEventListener("keydown", handleKeyDown, true);
 
   updateTooltip(
-    "Bewege die Maus ueber ein Element und klicke zum Screenshot. Oben rechts: Viewport oder Full Page. ESC beendet."
+    "Move over an element and click to capture it. Top right: Viewport or Full Page. Press ESC to exit."
   );
 }
 
@@ -100,7 +100,7 @@ async function handleClick(event) {
 
   try {
     captureInProgress = true;
-    updateTooltip("Element-Screenshot wird erstellt...");
+    updateTooltip("Creating element screenshot...");
     setPickerVisibility(false);
     await waitForNextPaint();
     const response = await chrome.runtime.sendMessage({
@@ -115,7 +115,7 @@ async function handleClick(event) {
     });
 
     if (!response?.ok) {
-      throw new Error(response?.error || "Unbekannter Fehler");
+      throw new Error(response?.error || "Unknown error");
     }
 
     stopPicker();
@@ -349,13 +349,13 @@ async function handleViewportCapture() {
 
   try {
     captureInProgress = true;
-    updateTooltip("Viewport-Screenshot wird erstellt...");
+    updateTooltip("Creating viewport screenshot...");
     setPickerVisibility(false);
     await waitForNextPaint();
     const response = await chrome.runtime.sendMessage({ type: "CAPTURE_VIEWPORT" });
 
     if (!response?.ok) {
-      throw new Error(response?.error || "Viewport-Capture fehlgeschlagen.");
+      throw new Error(response?.error || "Viewport capture failed.");
     }
 
     stopPicker();
@@ -363,7 +363,7 @@ async function handleViewportCapture() {
   } catch (error) {
     captureInProgress = false;
     setPickerVisibility(true);
-    updateTooltip(`Fehler: ${error.message}`);
+    updateTooltip(`Error: ${error.message}`);
   }
 }
 
@@ -378,7 +378,7 @@ async function handleFullPageCapture() {
 
   try {
     captureInProgress = true;
-    updateTooltip("Full-Page-Screenshot wird erstellt...");
+    updateTooltip("Creating full-page screenshot...");
     setPickerVisibility(false);
     await waitForNextPaint();
 
@@ -401,7 +401,7 @@ async function handleFullPageCapture() {
       renderHighlight(currentTarget.getBoundingClientRect());
     }
 
-    updateTooltip(`Fehler: ${error.message}`);
+    updateTooltip(`Error: ${error.message}`);
   }
 }
 
@@ -419,7 +419,7 @@ async function captureFullPageComposite(originalScrollX, originalScrollY) {
 
     const response = await chrome.runtime.sendMessage({ type: "CAPTURE_VIEWPORT" });
     if (!response?.ok) {
-      throw new Error(response?.error || "Viewport konnte nicht aufgenommen werden.");
+      throw new Error(response?.error || "Could not capture the viewport.");
     }
 
     const image = await loadImage(response.dataUrl);
@@ -437,7 +437,7 @@ async function captureFullPageComposite(originalScrollX, originalScrollY) {
       context = canvas.getContext("2d");
 
       if (!context) {
-        throw new Error("Canvas fuer Full-Page-Screenshot konnte nicht erstellt werden.");
+        throw new Error("Could not create the canvas for the full-page screenshot.");
       }
     }
 
@@ -459,7 +459,7 @@ async function captureFullPageComposite(originalScrollX, originalScrollY) {
   }
 
   if (!canvas) {
-    throw new Error("Full-Page-Screenshot konnte nicht zusammengesetzt werden.");
+    throw new Error("Could not assemble the full-page screenshot.");
   }
 
   return {
@@ -502,7 +502,7 @@ function buildVerticalScrollSteps(fullHeight, viewportHeight) {
 
 function assertCanvasSize(width, height) {
   if (width > maxCanvasEdge || height > maxCanvasEdge || width * height > maxCanvasArea) {
-    throw new Error("Die Seite ist fuer einen einzelnen Full-Page-Screenshot zu gross.");
+    throw new Error("This page is too large for a single full-page screenshot.");
   }
 }
 
@@ -529,7 +529,7 @@ async function loadImage(dataUrl) {
   return new Promise((resolve, reject) => {
     const image = new Image();
     image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error("Screenshot-Bild konnte nicht geladen werden."));
+    image.onerror = () => reject(new Error("Could not load the screenshot image."));
     image.src = dataUrl;
   });
 }
@@ -537,7 +537,7 @@ async function loadImage(dataUrl) {
 function restorePickerAfterError(rect, error) {
   setPickerVisibility(true);
   renderHighlight(rect);
-  updateTooltip(`Fehler: ${error.message}`);
+  updateTooltip(`Error: ${error.message}`);
 }
 
 function showActionDialog(capture) {
@@ -569,7 +569,7 @@ function showActionDialog(capture) {
   });
 
   const title = document.createElement("h2");
-  title.textContent = "Screenshot bereit";
+  title.textContent = "Screenshot ready";
   Object.assign(title.style, {
     margin: "0 0 10px",
     fontFamily: "Georgia, 'Times New Roman', serif",
@@ -578,7 +578,7 @@ function showActionDialog(capture) {
   });
 
   const copy = document.createElement("p");
-  copy.textContent = "Du kannst das Bild jetzt kopieren oder als PNG herunterladen.";
+  copy.textContent = "You can now copy the image or download it as a PNG.";
   Object.assign(copy.style, {
     margin: "0 0 14px",
     fontFamily: "system-ui, sans-serif",
@@ -608,9 +608,9 @@ function showActionDialog(capture) {
     flexWrap: "wrap"
   });
 
-  const copyButton = createDialogButton("Bild kopieren", false);
+  const copyButton = createDialogButton("Copy image", false);
   const downloadButton = createDialogButton("Download", true);
-  const closeButton = createDialogButton("Schliessen", false, true);
+  const closeButton = createDialogButton("Close", false, true);
 
   const status = document.createElement("p");
   status.textContent = capture.filename;
@@ -624,18 +624,18 @@ function showActionDialog(capture) {
   });
 
   copyButton.addEventListener("click", async () => {
-    setDialogStatus(status, "Kopiere Bild in die Zwischenablage...");
+    setDialogStatus(status, "Copying image to clipboard...");
 
     try {
       await copyCaptureToClipboard(capture.dataUrl);
-      setDialogStatus(status, "Bild wurde in die Zwischenablage kopiert.");
+      setDialogStatus(status, "Image copied to clipboard.");
     } catch (error) {
-      setDialogStatus(status, `Kopieren fehlgeschlagen: ${error.message}`);
+      setDialogStatus(status, `Copy failed: ${error.message}`);
     }
   });
 
   downloadButton.addEventListener("click", async () => {
-    setDialogStatus(status, "Download wird vorbereitet...");
+    setDialogStatus(status, "Preparing download...");
 
     try {
       const response = await chrome.runtime.sendMessage({
@@ -645,12 +645,12 @@ function showActionDialog(capture) {
       });
 
       if (!response?.ok) {
-        throw new Error(response?.error || "Download fehlgeschlagen.");
+        throw new Error(response?.error || "Download failed.");
       }
 
-      setDialogStatus(status, "Download gestartet.");
+      setDialogStatus(status, "Download started.");
     } catch (error) {
-      setDialogStatus(status, `Download fehlgeschlagen: ${error.message}`);
+      setDialogStatus(status, `Download failed: ${error.message}`);
     }
   });
 
@@ -716,7 +716,7 @@ function createDialogButton(label, isPrimary, isGhost = false) {
 
 async function copyCaptureToClipboard(dataUrl) {
   if (!navigator.clipboard?.write || typeof ClipboardItem === "undefined") {
-    throw new Error("Die Zwischenablage unterstuetzt hier kein Bild-Kopieren.");
+    throw new Error("Clipboard image copy is not supported here.");
   }
 
   const response = await fetch(dataUrl);

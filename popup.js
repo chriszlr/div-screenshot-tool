@@ -4,7 +4,7 @@ const statusElement = document.getElementById("status");
 const shortcutValueElement = document.getElementById("shortcut-value");
 
 pickButton.addEventListener("click", async () => {
-  setStatus("Auswahlmodus wird gestartet...");
+  setStatus("Starting selection mode...");
 
   try {
     const [tab] = await chrome.tabs.query({
@@ -13,14 +13,14 @@ pickButton.addEventListener("click", async () => {
     });
 
     if (!tab?.id) {
-      throw new Error("Aktiver Tab konnte nicht gefunden werden.");
+      throw new Error("Could not find the active tab.");
     }
 
     await chrome.tabs.sendMessage(tab.id, { type: "START_ELEMENT_PICKER" });
-    setStatus("Fahre mit der Maus ueber die Seite und klicke auf das gewuenschte Element.");
+    setStatus("Move your mouse over the page and click the element you want.");
     window.close();
   } catch (error) {
-    setStatus(`Fehler: ${error.message}`);
+    setStatus(`Error: ${error.message}`);
   }
 });
 
@@ -29,12 +29,12 @@ openShortcutsButton.addEventListener("click", async () => {
     const response = await chrome.runtime.sendMessage({ type: "OPEN_SHORTCUTS_PAGE" });
 
     if (!response?.ok) {
-      throw new Error(response?.error || "Shortcut-Seite konnte nicht geoeffnet werden.");
+      throw new Error(response?.error || "Could not open the shortcuts page.");
     }
 
     window.close();
   } catch (error) {
-    setStatus(`Shortcut-Seite bitte manuell oeffnen: chrome://extensions/shortcuts`);
+    setStatus("Please open chrome://extensions/shortcuts manually.");
   }
 });
 
@@ -50,12 +50,12 @@ async function loadShortcutState() {
     const pickerCommand = commands.find((command) => command.name === "start-picker");
 
     if (!pickerCommand) {
-      shortcutValueElement.textContent = "Nicht verfuegbar";
+      shortcutValueElement.textContent = "Not available";
       return;
     }
 
-    shortcutValueElement.textContent = pickerCommand.shortcut || "Noch kein Shortcut gesetzt";
+    shortcutValueElement.textContent = pickerCommand.shortcut || "No shortcut set yet";
   } catch (_error) {
-    shortcutValueElement.textContent = "Shortcut konnte nicht geladen werden";
+    shortcutValueElement.textContent = "Could not load shortcut";
   }
 }

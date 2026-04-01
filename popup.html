@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,17 +11,17 @@
       <p class="eyebrow">Chrome Extension</p>
       <h1>Div Screenshot Tool</h1>
       <p class="copy">
-        Waehle ein sichtbares Element direkt auf der aktuellen Seite aus und speichere es als PNG.
+        Pick any visible element on the current page and save it as a PNG.
       </p>
-      <button id="pick-element" class="primary">Element auswaehlen</button>
+      <button id="pick-element" class="primary">Pick element</button>
       <section class="shortcut-card">
         <p class="shortcut-label">Keyboard Shortcut</p>
-        <p id="shortcut-value" class="shortcut-value">Wird geladen...</p>
-        <button id="open-shortcuts" class="secondary">Shortcut festlegen</button>
-        <p class="shortcut-note">Chrome verwaltet Tastenkombinationen zentral ueber `chrome://extensions/shortcuts`.</p>
+        <p id="shortcut-value" class="shortcut-value">Loading...</p>
+        <button id="open-shortcuts" class="secondary">Set shortcut</button>
+        <p class="shortcut-note">Chrome manages keyboard shortcuts centrally at `chrome://extensions/shortcuts`.</p>
       </section>
       <p id="status" class="status">
-        Das Tool funktioniert fuer Elemente im aktuell sichtbaren Seitenbereich.
+        This tool works for elements inside the currently visible part of the page.
       </p>
     </main>
     <script src="popup.js"></script>
