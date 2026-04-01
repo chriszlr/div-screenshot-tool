@@ -1,0 +1,109 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background:
+    radial-gradient(circle at top left, rgba(255, 146, 87, 0.35), transparent 38%),
+    linear-gradient(145deg, #fff4e8 0%, #f5ede1 54%, #ebe0d3 100%);
+  color: #1f1a17;
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.popup {
+  padding: 20px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #8b5e34;
+}
+
+h1 {
+  margin: 0 0 10px;
+  font-size: 28px;
+  line-height: 1;
+}
+
+.copy,
+.status {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.copy {
+  color: #4a3b30;
+}
+
+.primary {
+  width: 100%;
+  margin: 18px 0 14px;
+  padding: 13px 16px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #1f1a17, #45362b);
+  color: #fff7f0;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 10px 24px rgba(38, 26, 17, 0.22);
+}
+
+.primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px rgba(38, 26, 17, 0.28);
+}
+
+.shortcut-card {
+  margin: 0 0 14px;
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(255, 251, 247, 0.7);
+  border: 1px solid rgba(80, 58, 39, 0.1);
+}
+
+.shortcut-label {
+  margin: 0 0 4px;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #8b5e34;
+}
+
+.shortcut-value {
+  margin: 0 0 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #2b211a;
+}
+
+.secondary {
+  width: 100%;
+  padding: 11px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(56, 40, 27, 0.12);
+  background: rgba(255, 255, 255, 0.72);
+  color: #2f231d;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.shortcut-note {
+  margin: 10px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #6f5a48;
+}
+
+.status {
+  color: #6f5a48;
+}

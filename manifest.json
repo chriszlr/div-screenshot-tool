@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "Div Screenshot Tool",
+  "version": "1.0.0",
+  "description": "Markiert einzelne Elemente auf einer Seite und speichert sie als Screenshot.",
+  "permissions": [
+    "activeTab",
+    "clipboardWrite",
+    "downloads",
+    "tabs"
+  ],
+  "commands": {
+    "start-picker": {
+      "description": "Startet die Elementauswahl fuer den Screenshot"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Div Screenshot Tool",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}
