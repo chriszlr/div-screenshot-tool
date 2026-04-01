@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Div Screenshot Tool",
   "version": "1.0.0",
-  "description": "Markiert einzelne Elemente auf einer Seite und speichert sie als Screenshot.",
+  "description": "Capture individual elements, the visible viewport, or an entire page as screenshots.",
   "permissions": [
     "activeTab",
     "clipboardWrite",
@@ -11,7 +11,7 @@
   ],
   "commands": {
     "start-picker": {
-      "description": "Startet die Elementauswahl fuer den Screenshot"
+      "description": "Start the screenshot picker"
     }
   },
   "background": {

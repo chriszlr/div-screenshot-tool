@@ -1,33 +1,33 @@
 # Div Screenshot Tool
 
-Chrome-Erweiterung zum Aufnehmen einzelner sichtbarer Seitenelemente wie `div`, `section`, `article` oder Buttons.
+A Chrome extension for capturing individual visible page elements like `div`, `section`, `article`, or buttons.
 
 ## Installation
 
-1. In Chrome `chrome://extensions` oeffnen.
-2. Den Entwicklermodus aktivieren.
-3. Auf `Entpackte Erweiterung laden` klicken.
-4. Diesen Ordner auswaehlen: `/Users/chris/Dev/div-screenshots`
+1. Open `chrome://extensions` in Chrome.
+2. Enable Developer mode.
+3. Click `Load unpacked`.
+4. Select this folder: `/Users/chris/Dev/div-screenshots`
 
-## Nutzung
+## Usage
 
-1. Eine Webseite oeffnen.
-2. Auf das Erweiterungs-Icon klicken.
-3. `Element auswaehlen` starten.
-4. Im Auswahlmodus erscheinen oben rechts die Buttons `Viewport` und `Full Page`.
-5. Mit der Maus ueber das gewuenschte Element fahren und klicken, wenn du nur ein einzelnes Element aufnehmen willst.
-6. Oder `Viewport` klicken, um den aktuell sichtbaren Bereich komplett zu fotografieren.
-7. Oder `Full Page` klicken, um die Seite bis ganz nach unten durchzuscrollen und als ein Bild zusammenzusetzen.
-8. Im eingeblendeten Dialog `Bild kopieren` oder `Download` waehlen.
-9. Mit `ESC` den Auswahlmodus abbrechen.
+1. Open any webpage.
+2. Click the extension icon.
+3. Start `Pick element`.
+4. In selection mode, the `Viewport` and `Full Page` buttons appear in the top-right corner.
+5. Move your mouse over the element you want and click if you only want to capture a single element.
+6. Or click `Viewport` to capture the entire currently visible area.
+7. Or click `Full Page` to scroll through the page and stitch the result into a single image.
+8. In the dialog, choose `Copy image` or `Download`.
+9. Press `ESC` to exit selection mode.
 
 ## Shortcut
 
-- Im Popup der Erweiterung wird der aktuelle Shortcut angezeigt.
-- Ueber `Shortcut festlegen` kommst du zu `chrome://extensions/shortcuts`.
-- Dort kannst du fuer `Div Screenshot Tool` eine eigene Tastenkombination setzen, die den Auswahlmodus mitsamt der Buttons `Viewport` und `Full Page` direkt startet.
+- The popup shows the currently assigned shortcut.
+- Use `Set shortcut` to open `chrome://extensions/shortcuts`.
+- There you can assign a keyboard shortcut for `Div Screenshot Tool` that opens selection mode with the `Viewport` and `Full Page` buttons ready to use.
 
-## Hinweis
+## Notes
 
-- Die Erweiterung fotografiert den aktuell sichtbaren Bereich des Tabs und schneidet daraus das gewaehlte Element aus.
-- Sehr grosse oder teilweise ausserhalb des sichtbaren Bereichs liegende Elemente koennen deshalb nicht vollstaendig erfasst werden.
+- The extension captures the currently visible tab area and crops the selected element out of it.
+- Very large elements, or elements that are partially outside the visible viewport, may not be captured completely.

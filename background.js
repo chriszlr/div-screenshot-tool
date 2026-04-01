@@ -42,13 +42,13 @@ chrome.commands.onCommand.addListener(async (command) => {
   try {
     await startPickerOnActiveTab();
   } catch (error) {
-    console.error("Shortcut konnte den Picker nicht starten:", error);
+    console.error("Shortcut could not start the picker:", error);
   }
 });
 
 async function captureElement(rect, windowId) {
   if (!rect) {
-    throw new Error("Kein Elementbereich uebergeben.");
+    throw new Error("No element bounds were provided.");
   }
 
   const imageUrl = await captureVisibleTab(windowId);
@@ -58,7 +58,7 @@ async function captureElement(rect, windowId) {
   const context = canvas.getContext("2d");
 
   if (!context) {
-    throw new Error("Canvas-Kontext konnte nicht erstellt werden.");
+    throw new Error("Could not create the canvas context.");
   }
 
   context.drawImage(bitmap, 0, 0);
@@ -69,14 +69,14 @@ async function captureElement(rect, windowId) {
   const cropHeight = Math.max(1, Math.round(rect.height * rect.devicePixelRatio));
 
   if (cropX + cropWidth > bitmap.width || cropY + cropHeight > bitmap.height) {
-    throw new Error("Das Element liegt nicht vollstaendig im sichtbaren Bereich.");
+    throw new Error("The selected element is not fully inside the visible viewport.");
   }
 
   const outputCanvas = new OffscreenCanvas(cropWidth, cropHeight);
   const outputContext = outputCanvas.getContext("2d");
 
   if (!outputContext) {
-    throw new Error("Ausgabe-Canvas konnte nicht erstellt werden.");
+    throw new Error("Could not create the output canvas.");
   }
 
   outputContext.drawImage(
@@ -119,7 +119,7 @@ async function captureViewport(windowId) {
 function blobToDataUrl(blob) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onerror = () => reject(new Error("Blob konnte nicht gelesen werden."));
+    reader.onerror = () => reject(new Error("Could not read the blob."));
     reader.onloadend = () => resolve(reader.result);
     reader.readAsDataURL(blob);
   });
@@ -127,7 +127,7 @@ function blobToDataUrl(blob) {
 
 async function downloadCapture(message) {
   if (!message?.dataUrl || !message?.filename) {
-    throw new Error("Downloaddaten sind unvollstaendig.");
+    throw new Error("Download data is incomplete.");
   }
 
   const downloadId = await chrome.downloads.download({
@@ -158,7 +158,7 @@ async function startPickerOnActiveTab() {
   });
 
   if (!tab?.id) {
-    throw new Error("Aktiver Tab konnte nicht gefunden werden.");
+    throw new Error("Could not find the active tab.");
   }
 
   await chrome.tabs.sendMessage(tab.id, { type: "START_ELEMENT_PICKER" });
