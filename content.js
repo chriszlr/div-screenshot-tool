@@ -1,11 +1,16 @@
 const overlayId = "__div_screenshot_overlay__";
 const tooltipId = "__div_screenshot_tooltip__";
+const toolbarId = "__div_screenshot_toolbar__";
 const actionDialogId = "__div_screenshot_action_dialog__";
+const maxCanvasEdge = 32767;
+const maxCanvasArea = 268435456;
 
 let selectionActive = false;
+let captureInProgress = false;
 let currentTarget = null;
 let overlayElement = null;
 let tooltipElement = null;
+let toolbarElement = null;
 let actionDialogElement = null;
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
@@ -22,7 +27,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 });
 
 function startPicker() {
-  if (selectionActive) {
+  if (selectionActive || captureInProgress) {
     return;
   }
 
@@ -30,16 +35,20 @@ function startPicker() {
   selectionActive = true;
   ensureOverlay();
   ensureTooltip();
+  ensureToolbar();
 
   document.addEventListener("mousemove", handleMouseMove, true);
   document.addEventListener("click", handleClick, true);
   document.addEventListener("keydown", handleKeyDown, true);
 
-  updateTooltip("Bewege die Maus ueber ein Element und klicke zum Screenshot. ESC beendet.");
+  updateTooltip(
+    "Bewege die Maus ueber ein Element und klicke zum Screenshot. Oben rechts: Viewport oder Full Page. ESC beendet."
+  );
 }
 
 function stopPicker() {
   selectionActive = false;
+  captureInProgress = false;
   currentTarget = null;
 
   document.removeEventListener("mousemove", handleMouseMove, true);
@@ -48,12 +57,14 @@ function stopPicker() {
 
   overlayElement?.remove();
   tooltipElement?.remove();
+  toolbarElement?.remove();
   overlayElement = null;
   tooltipElement = null;
+  toolbarElement = null;
 }
 
 function handleMouseMove(event) {
-  if (!selectionActive) {
+  if (!selectionActive || captureInProgress) {
     return;
   }
 
@@ -68,7 +79,11 @@ function handleMouseMove(event) {
 }
 
 async function handleClick(event) {
-  if (!selectionActive) {
+  if (!selectionActive || captureInProgress) {
+    return;
+  }
+
+  if (isExtensionUiNode(event.target)) {
     return;
   }
 
@@ -84,7 +99,8 @@ async function handleClick(event) {
   const rect = target.getBoundingClientRect();
 
   try {
-    updateTooltip("Screenshot wird erstellt...");
+    captureInProgress = true;
+    updateTooltip("Element-Screenshot wird erstellt...");
     setPickerVisibility(false);
     await waitForNextPaint();
     const response = await chrome.runtime.sendMessage({
@@ -105,9 +121,8 @@ async function handleClick(event) {
     stopPicker();
     showActionDialog(response);
   } catch (error) {
-    setPickerVisibility(true);
-    renderHighlight(rect);
-    updateTooltip(`Fehler: ${error.message}`);
+    captureInProgress = false;
+    restorePickerAfterError(rect, error);
   }
 }
 
@@ -119,9 +134,15 @@ function handleKeyDown(event) {
 }
 
 function getSelectableTarget(clientX, clientY) {
+  if (!overlayElement || !tooltipElement) {
+    return null;
+  }
+
   overlayElement.style.pointerEvents = "none";
   tooltipElement.style.pointerEvents = "none";
+
   const target = document.elementFromPoint(clientX, clientY);
+
   overlayElement.style.pointerEvents = "none";
   tooltipElement.style.pointerEvents = "none";
 
@@ -129,7 +150,21 @@ function getSelectableTarget(clientX, clientY) {
     return null;
   }
 
+  if (isExtensionUiNode(target)) {
+    return null;
+  }
+
   return target;
+}
+
+function isExtensionUiNode(node) {
+  return Boolean(
+    node instanceof Node &&
+      ((overlayElement && overlayElement.contains(node)) ||
+        (tooltipElement && tooltipElement.contains(node)) ||
+        (toolbarElement && toolbarElement.contains(node)) ||
+        (actionDialogElement && actionDialogElement.contains(node)))
+  );
 }
 
 function renderHighlight(rect) {
@@ -174,7 +209,7 @@ function ensureTooltip() {
     right: "16px",
     bottom: "16px",
     zIndex: "2147483647",
-    maxWidth: "320px",
+    maxWidth: "360px",
     padding: "10px 12px",
     borderRadius: "12px",
     background: "#151821",
@@ -188,6 +223,68 @@ function ensureTooltip() {
   document.documentElement.appendChild(tooltipElement);
 }
 
+function ensureToolbar() {
+  if (toolbarElement) {
+    return;
+  }
+
+  toolbarElement = document.createElement("div");
+  toolbarElement.id = toolbarId;
+  Object.assign(toolbarElement.style, {
+    position: "fixed",
+    top: "16px",
+    right: "16px",
+    zIndex: "2147483647",
+    display: "flex",
+    gap: "10px",
+    alignItems: "center",
+    padding: "10px",
+    borderRadius: "18px",
+    background: "rgba(255, 248, 241, 0.94)",
+    boxShadow: "0 20px 48px rgba(0, 0, 0, 0.18)",
+    border: "1px solid rgba(54, 38, 24, 0.12)",
+    backdropFilter: "blur(8px)"
+  });
+
+  const viewportButton = createToolbarButton("Viewport");
+  const fullPageButton = createToolbarButton("Full Page");
+
+  viewportButton.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    void handleViewportCapture();
+  });
+
+  fullPageButton.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    void handleFullPageCapture();
+  });
+
+  toolbarElement.append(viewportButton, fullPageButton);
+  document.documentElement.appendChild(toolbarElement);
+}
+
+function createToolbarButton(label) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.textContent = label;
+  Object.assign(button.style, {
+    appearance: "none",
+    border: "0",
+    borderRadius: "999px",
+    padding: "11px 15px",
+    cursor: "pointer",
+    background: "linear-gradient(135deg, #1f1a17, #48382d)",
+    color: "#fff8f1",
+    fontFamily: "system-ui, sans-serif",
+    fontSize: "14px",
+    fontWeight: "700",
+    boxShadow: "0 10px 24px rgba(38, 26, 17, 0.2)"
+  });
+  return button;
+}
+
 function updateTooltip(text) {
   if (tooltipElement) {
     tooltipElement.textContent = text;
@@ -195,12 +292,19 @@ function updateTooltip(text) {
 }
 
 function setPickerVisibility(isVisible) {
+  const displayValue = isVisible ? "block" : "none";
+  const toolbarDisplayValue = isVisible ? "flex" : "none";
+
   if (overlayElement) {
-    overlayElement.style.display = isVisible ? "block" : "none";
+    overlayElement.style.display = displayValue;
   }
 
   if (tooltipElement) {
-    tooltipElement.style.display = isVisible ? "block" : "none";
+    tooltipElement.style.display = displayValue;
+  }
+
+  if (toolbarElement) {
+    toolbarElement.style.display = toolbarDisplayValue;
   }
 }
 
@@ -209,6 +313,16 @@ function waitForNextPaint() {
     window.requestAnimationFrame(() => {
       window.requestAnimationFrame(resolve);
     });
+  });
+}
+
+function waitForScrollSettling(delayMs = 140) {
+  return new Promise((resolve) => {
+    window.setTimeout(() => {
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(resolve);
+      });
+    }, delayMs);
   });
 }
 
@@ -226,6 +340,204 @@ function buildLabel(element) {
     : "";
 
   return `Auswahl: ${tag}${id}${classes || ""}`;
+}
+
+async function handleViewportCapture() {
+  if (!selectionActive || captureInProgress) {
+    return;
+  }
+
+  try {
+    captureInProgress = true;
+    updateTooltip("Viewport-Screenshot wird erstellt...");
+    setPickerVisibility(false);
+    await waitForNextPaint();
+    const response = await chrome.runtime.sendMessage({ type: "CAPTURE_VIEWPORT" });
+
+    if (!response?.ok) {
+      throw new Error(response?.error || "Viewport-Capture fehlgeschlagen.");
+    }
+
+    stopPicker();
+    showActionDialog(response);
+  } catch (error) {
+    captureInProgress = false;
+    setPickerVisibility(true);
+    updateTooltip(`Fehler: ${error.message}`);
+  }
+}
+
+async function handleFullPageCapture() {
+  if (!selectionActive || captureInProgress) {
+    return;
+  }
+
+  const originalScrollX = window.scrollX;
+  const originalScrollY = window.scrollY;
+  const restoreScrollBehavior = disableSmoothScroll();
+
+  try {
+    captureInProgress = true;
+    updateTooltip("Full-Page-Screenshot wird erstellt...");
+    setPickerVisibility(false);
+    await waitForNextPaint();
+
+    const capture = await captureFullPageComposite(originalScrollX, originalScrollY);
+
+    window.scrollTo(originalScrollX, originalScrollY);
+    await waitForScrollSettling();
+    restoreScrollBehavior();
+
+    stopPicker();
+    showActionDialog(capture);
+  } catch (error) {
+    restoreScrollBehavior();
+    window.scrollTo(originalScrollX, originalScrollY);
+    await waitForScrollSettling();
+    captureInProgress = false;
+    setPickerVisibility(true);
+
+    if (currentTarget) {
+      renderHighlight(currentTarget.getBoundingClientRect());
+    }
+
+    updateTooltip(`Fehler: ${error.message}`);
+  }
+}
+
+async function captureFullPageComposite(originalScrollX, originalScrollY) {
+  const pageMetrics = getPageMetrics();
+  const scrollSteps = buildVerticalScrollSteps(pageMetrics.fullHeight, pageMetrics.viewportHeight);
+
+  let canvas = null;
+  let context = null;
+  let scale = 1;
+
+  for (const scrollY of scrollSteps) {
+    window.scrollTo(originalScrollX, scrollY);
+    await waitForScrollSettling();
+
+    const response = await chrome.runtime.sendMessage({ type: "CAPTURE_VIEWPORT" });
+    if (!response?.ok) {
+      throw new Error(response?.error || "Viewport konnte nicht aufgenommen werden.");
+    }
+
+    const image = await loadImage(response.dataUrl);
+
+    if (!canvas) {
+      scale = image.width / pageMetrics.viewportWidth;
+      const canvasWidth = Math.round(pageMetrics.viewportWidth * scale);
+      const canvasHeight = Math.round(pageMetrics.fullHeight * scale);
+
+      assertCanvasSize(canvasWidth, canvasHeight);
+
+      canvas = document.createElement("canvas");
+      canvas.width = canvasWidth;
+      canvas.height = canvasHeight;
+      context = canvas.getContext("2d");
+
+      if (!context) {
+        throw new Error("Canvas fuer Full-Page-Screenshot konnte nicht erstellt werden.");
+      }
+    }
+
+    const drawY = Math.round(scrollY * scale);
+    const remainingHeight = canvas.height - drawY;
+    const sourceHeight = Math.min(image.height, remainingHeight);
+
+    context.drawImage(
+      image,
+      0,
+      0,
+      image.width,
+      sourceHeight,
+      0,
+      drawY,
+      image.width,
+      sourceHeight
+    );
+  }
+
+  if (!canvas) {
+    throw new Error("Full-Page-Screenshot konnte nicht zusammengesetzt werden.");
+  }
+
+  return {
+    filename: `full-page-screenshot-${Date.now()}.png`,
+    dataUrl: canvas.toDataURL("image/png")
+  };
+}
+
+function getPageMetrics() {
+  const scrollingElement = document.scrollingElement || document.documentElement;
+  const fullHeight = Math.max(
+    scrollingElement.scrollHeight,
+    document.documentElement.scrollHeight,
+    document.body ? document.body.scrollHeight : 0
+  );
+  const viewportHeight = Math.max(window.innerHeight, document.documentElement.clientHeight);
+  const viewportWidth = Math.max(window.innerWidth, document.documentElement.clientWidth);
+
+  return {
+    fullHeight,
+    viewportHeight,
+    viewportWidth
+  };
+}
+
+function buildVerticalScrollSteps(fullHeight, viewportHeight) {
+  const maxScrollY = Math.max(0, fullHeight - viewportHeight);
+  const steps = [];
+
+  for (let currentY = 0; currentY <= maxScrollY; currentY += viewportHeight) {
+    steps.push(currentY);
+  }
+
+  if (steps.length === 0 || steps[steps.length - 1] !== maxScrollY) {
+    steps.push(maxScrollY);
+  }
+
+  return [...new Set(steps)];
+}
+
+function assertCanvasSize(width, height) {
+  if (width > maxCanvasEdge || height > maxCanvasEdge || width * height > maxCanvasArea) {
+    throw new Error("Die Seite ist fuer einen einzelnen Full-Page-Screenshot zu gross.");
+  }
+}
+
+function disableSmoothScroll() {
+  const html = document.documentElement;
+  const body = document.body;
+  const previousHtml = html.style.scrollBehavior;
+  const previousBody = body ? body.style.scrollBehavior : "";
+
+  html.style.scrollBehavior = "auto";
+  if (body) {
+    body.style.scrollBehavior = "auto";
+  }
+
+  return () => {
+    html.style.scrollBehavior = previousHtml;
+    if (body) {
+      body.style.scrollBehavior = previousBody;
+    }
+  };
+}
+
+async function loadImage(dataUrl) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("Screenshot-Bild konnte nicht geladen werden."));
+    image.src = dataUrl;
+  });
+}
+
+function restorePickerAfterError(rect, error) {
+  setPickerVisibility(true);
+  renderHighlight(rect);
+  updateTooltip(`Fehler: ${error.message}`);
 }
 
 function showActionDialog(capture) {

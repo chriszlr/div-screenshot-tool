@@ -15,6 +15,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  if (message?.type === "CAPTURE_VIEWPORT") {
+    captureViewport(sender.tab?.windowId)
+      .then((result) => sendResponse({ ok: true, ...result }))
+      .catch((error) => sendResponse({ ok: false, error: error.message }));
+
+    return true;
+  }
+
   if (message?.type === "OPEN_SHORTCUTS_PAGE") {
     openShortcutsPage()
       .then(() => sendResponse({ ok: true }))
@@ -43,9 +51,7 @@ async function captureElement(rect, windowId) {
     throw new Error("Kein Elementbereich uebergeben.");
   }
 
-  const imageUrl = await chrome.tabs.captureVisibleTab(windowId, {
-    format: "png"
-  });
+  const imageUrl = await captureVisibleTab(windowId);
 
   const bitmap = await createImageBitmapFromDataUrl(imageUrl);
   const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
@@ -101,6 +107,15 @@ async function createImageBitmapFromDataUrl(dataUrl) {
   return createImageBitmap(blob);
 }
 
+async function captureViewport(windowId) {
+  const dataUrl = await captureVisibleTab(windowId);
+
+  return {
+    dataUrl,
+    filename: `viewport-screenshot-${Date.now()}.png`
+  };
+}
+
 function blobToDataUrl(blob) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -122,6 +137,12 @@ async function downloadCapture(message) {
   });
 
   return { downloadId };
+}
+
+async function captureVisibleTab(windowId) {
+  return chrome.tabs.captureVisibleTab(windowId, {
+    format: "png"
+  });
 }
 
 async function openShortcutsPage() {
