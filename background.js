@@ -52,24 +52,22 @@ async function captureElement(rect, windowId) {
   }
 
   const imageUrl = await captureVisibleTab(windowId);
-
   const bitmap = await createImageBitmapFromDataUrl(imageUrl);
-  const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
-  const context = canvas.getContext("2d");
+  const scale = rect.devicePixelRatio || 1;
+  const rawLeft = rect.left * scale;
+  const rawTop = rect.top * scale;
+  const rawRight = (rect.left + rect.width) * scale;
+  const rawBottom = (rect.top + rect.height) * scale;
 
-  if (!context) {
-    throw new Error("Could not create the canvas context.");
-  }
+  const cropLeft = Math.max(0, Math.floor(rawLeft));
+  const cropTop = Math.max(0, Math.floor(rawTop));
+  const cropRight = Math.min(bitmap.width, Math.ceil(rawRight));
+  const cropBottom = Math.min(bitmap.height, Math.ceil(rawBottom));
+  const cropWidth = cropRight - cropLeft;
+  const cropHeight = cropBottom - cropTop;
 
-  context.drawImage(bitmap, 0, 0);
-
-  const cropX = Math.max(0, Math.round(rect.left * rect.devicePixelRatio));
-  const cropY = Math.max(0, Math.round(rect.top * rect.devicePixelRatio));
-  const cropWidth = Math.max(1, Math.round(rect.width * rect.devicePixelRatio));
-  const cropHeight = Math.max(1, Math.round(rect.height * rect.devicePixelRatio));
-
-  if (cropX + cropWidth > bitmap.width || cropY + cropHeight > bitmap.height) {
-    throw new Error("The selected element is not fully inside the visible viewport.");
+  if (cropWidth <= 0 || cropHeight <= 0) {
+    throw new Error("The selected element is outside the visible viewport.");
   }
 
   const outputCanvas = new OffscreenCanvas(cropWidth, cropHeight);
@@ -80,9 +78,9 @@ async function captureElement(rect, windowId) {
   }
 
   outputContext.drawImage(
-    canvas,
-    cropX,
-    cropY,
+    bitmap,
+    cropLeft,
+    cropTop,
     cropWidth,
     cropHeight,
     0,
